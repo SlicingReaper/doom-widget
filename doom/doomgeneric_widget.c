@@ -14,8 +14,11 @@ static unsigned int kw = 0, kr = 0;
 
 void DG_Init(void) {}
 void DG_DrawFrame(void) {}
-void DG_SleepMs(uint32_t ms) { (void)ms; }   // never block: the JS loop paces the ticks
-uint32_t DG_GetTicksMs(void) { return js_ticks(); }
+// Never block. A "sleep" just moves the virtual clock forward, so the engine's own wait loops
+// (screen wipe, TryRunTics) always finish instead of spinning on a frozen clock.
+static uint32_t slept = 0;
+void DG_SleepMs(uint32_t ms) { slept += ms ? ms : 1; }
+uint32_t DG_GetTicksMs(void) { return js_ticks() + slept; }
 void DG_SetWindowTitle(const char *t) { (void)t; }
 
 int DG_GetKey(int *pressed, unsigned char *key) {
